@@ -7,10 +7,12 @@ public class Rectangle {
         this.height=h;
     }
 
+    public static void main(String[] args) {
+        return;
+    }
     public double area(){
         return width*height;
     }
-
     /**
      * scales the rectangle
      * @param factor

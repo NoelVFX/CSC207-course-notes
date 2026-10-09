@@ -2,6 +2,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Exercise (Chapter: APIs, JSON, and Files) — reading data from a file into objects.
@@ -90,9 +92,9 @@ public class NumberTriangle {
    * Follows path through this NumberTriangle structure ('l' = left; 'r' = right) and
    * returns the root value at the end of the path. An empty string returns the root
    * of this NumberTriangle.
-   *
+   * <p>
    * You can decide if you want to use a recursive or an iterative approach.
-   *
+   * <p>
    * You can assume that:
    * <ul>
    *   <li>the length of path is less than the height of this NumberTriangle structure;</li>
@@ -103,22 +105,26 @@ public class NumberTriangle {
    * @return the root value at the location indicated by path
    */
   public int retrieve(String path) {
-    // TODO: walk the path one character at a time, starting from this object.
-    //       For each character, move to the left child (if it is 'l') or the
-    //       right child (if it is 'r'). When the path runs out, return the root
-    //       value of wherever you ended up. An empty path means "stay here".
-    //       Hint: String#charAt(int) and String#length() are all you need for the
-    //       iterative version; a recursive version can use String#substring(1).
-    return 0;
+    if (path.isEmpty()) {
+      return root;
+    } else {
+      if (path.charAt(0) == 'l') {
+        return this.left.retrieve(path.substring(1));
+      } else if (path.charAt(0) == 'r') {
+        return this.right.retrieve(path.substring(1));
+      } else {
+        return 0;
+      }
+    }
   }
 
   /**
    * Reads in the NumberTriangle structure from a file.
-   *
+   * <p>
    * You may assume that it is a valid format with a height of at least 1, so there
    * is at least one line with a number on it to start the file. Numbers on a line
    * are separated by spaces. See {@code input_tree.txt} for an example.
-   *
+   * <p>
    * The first row is the root of the NumberTriangle (call it 0).
    * The second line contains the two children of the root (call them 1L and 1R).
    * The third line contains the three numbers corresponding to:
@@ -139,19 +145,19 @@ public class NumberTriangle {
    *         /  \  /  \
    *       2LL  2LR*  2RR    *2LR == 2RL
    * </pre>
-   *
+   * <p>
    * Hint 0: Start by making a plan and scaffolding what you plan to do. If you are
    *         still finding it hard to "think in Java", write some comments describing
    *         what you want to do first.
-   *
+   * <p>
    * Hint 1: Think about what you need to keep track of on each iteration of the loop
    *         and make appropriate variables to store those things. Working through
    *         {@code little_tree.txt} by hand should help you develop the general logic.
-   *
+   * <p>
    * Hint 2: Related to Hint 1, think about how to connect NumberTriangle objects
    *         between adjacent rows in the structure. Remember that the row you just
    *         built becomes the children of the row before it.
-   *
+   * <p>
    * Hint 3: If you are still stuck, look for a subproblem that you can solve, then
    *         design the logic of your solution around a helper method that you
    *         implement separately. Decomposing a problem this way makes it much more
@@ -173,33 +179,54 @@ public class NumberTriangle {
 
     // We need to return the top of the NumberTriangle, so here is a variable for it.
     NumberTriangle top = null;
+    NumberTriangle[] curRow = null;
+    Map<Integer, NumberTriangle> maps = new HashMap<>();
 
     String line = br.readLine();
     while (line != null) {
+      String[] arr = line.split(" ");
+      if (curRow == null) {
+          top = new NumberTriangle(Integer.parseInt(arr[0]));
+          curRow = new NumberTriangle[]{top};
+      } else {
+        NumberTriangle[] tempRow = new NumberTriangle[curRow.length + 1];
+        int i = 0;
+        for (NumberTriangle triangle : curRow) {
+          if (i == arr.length - 1) {
+            break;
+          }
+          if (maps.containsKey(i)) {
+            triangle.left = maps.get(i);
+          } else {
+            triangle.left = new NumberTriangle(Integer.parseInt(arr[i]));
+          }
+          tempRow[i] = triangle.left;
+          triangle.right = new NumberTriangle(Integer.parseInt(arr[i + 1]));
+          maps.put(i + 1, triangle.right);
+          i++;
+        }
+        tempRow[tempRow.length - 1] = curRow[curRow.length - 1].right;
+        curRow = tempRow;
 
-      // Remove this line when you are done; it is here so that the starter code
-      // prints the contents of the file when you run it.
-      System.out.println(line);
+        // Remove this line when you are done; it is here so that the starter code
+        // prints the contents of the file when you run it.
+        System.out.println(line);
 
-      // TODO: process the line. Splitting it on spaces gives you the numbers in
-      //       this row; make a NumberTriangle for each one, then wire this row up
-      //       as the children of the previous row. Remember the aliasing: the
-      //       right child of one node is the left child of the next node over.
-
-      // read the next line
-      line = br.readLine();
+        // read the next line
+      }
+        line = br.readLine();
     }
     br.close();
-    return top;
-  }
 
-  /**
-   * Loads the example triangle and prints its root value.
-   *
-   * @param args unused
-   * @throws IOException if the file cannot be read
-   */
-  public static void main(String[] args) throws IOException {
+    /**
+     * Loads the example triangle and prints its root value.
+     *
+     * @param args unused
+     * @throws IOException if the file cannot be read
+     */
+      return top;
+  }
+  public static void main (String[]args) throws IOException {
     NumberTriangle mt = NumberTriangle.loadTriangle("input_tree.txt");
     System.out.println("Root of the triangle: " + mt.getRoot());
   }

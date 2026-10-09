@@ -27,19 +27,97 @@ abstract class Item {
   + getCatalogueNumber() : String
 }
 
-' TODO: add boxes for Book and DVD. What differs between them — a whole class,
-'       or just the value of a loan-period field?
+' Only some items can be borrowed, so borrowing is a capability (interface)
+' rather than something every Item has.
+interface Borrowable {
+  + borrow(member : Member) : Loan
+  + returnItem() : void
+  + isOnLoan() : boolean
+  + placeHold(member : Member) : Hold
+}
 
-' TODO: reference-only items cannot be borrowed at all. Decide how to say that
-'       in the diagram: a subclass, or an interface (e.g. "Borrowable") that
-'       only some items realize?
+' Books and DVDs differ only in how long they can be borrowed for, so the loan
+' period is a field here; Book and DVD just supply its value (21 vs 7 days).
+abstract class BorrowableItem {
+  - loanPeriodDays : int
+  - currentLoan : Loan
+  - holds : List<Hold>
+  + borrow(member : Member) : Loan
+  + returnItem() : void
+  + isOnLoan() : boolean
+  + placeHold(member : Member) : Hold
+}
 
-' TODO: add Member and Librarian. What do they have in common? Add the common
-'       supertype if you think one is warranted.
+class Book {
+  + Book(title : String, catalogueNumber : String)
+}
 
-' TODO: add whatever represents a hold, and connect it to the classes that need
-'       to know about it.
+class DVD {
+  + DVD(title : String, catalogueNumber : String)
+}
 
-' TODO: add the arrows between all of your types.
+' Reference-only items do not realize Borrowable, so they cannot be borrowed.
+class ReferenceItem {
+  + ReferenceItem(title : String, catalogueNumber : String)
+}
+
+class Loan {
+  - dueDate : LocalDate
+  + getBorrower() : Member
+  + isOverdue() : boolean
+}
+
+' The item remembers its holds: it still exists, and is easy to find, at the
+' moment it is returned and someone needs to know who is waiting.
+class Hold {
+  - datePlaced : LocalDate
+  + getMember() : Member
+}
+
+class Catalogue {
+  + addItem(item : Item) : void
+  + findByCatalogueNumber(number : String) : Item
+}
+
+abstract class Person {
+  - name : String
+  + getName() : String
+}
+
+class Member {
+  - memberNumber : String
+  - lateFee : double
+  + logIn(memberNumber : String) : boolean
+  + getLateFee() : double
+  + setLateFee(amount : double) : void
+}
+
+class Librarian {
+  + addItem(catalogue : Catalogue, item : Item) : void
+  + waiveLateFee(member : Member) : void
+}
+
+' generalization
+Item <|-- BorrowableItem
+Item <|-- ReferenceItem
+BorrowableItem <|-- Book
+BorrowableItem <|-- DVD
+Person <|-- Member
+Person <|-- Librarian
+
+' realization
+Borrowable <|.. BorrowableItem
+
+' associations
+Catalogue o-- Item : contains
+BorrowableItem --> Loan : currentLoan
+BorrowableItem --> Hold : holds
+Loan --> Member : borrower
+Hold --> Member : placedBy
+
+' dependencies (uses, without storing a reference)
+Member ..> Borrowable : borrows / places hold on
+Librarian ..> Catalogue : adds items to
+Librarian ..> Member : waives late fee of
 
 @enduml
